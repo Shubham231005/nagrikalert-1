@@ -163,6 +163,13 @@ NagrikAlert/
 ## 📱 Screenshots
 
 <p align="center">
+  <img src="Implementation Screenshots/Login.png" alt="Login Screen" width="24%" />
+  <img src="Implementation Screenshots/Home Dashboard.png" alt="Home Dashboard" width="24%" />
+  <img src="Implementation Screenshots/Report Incident.png" alt="Report Incident" width="24%" />
+  <img src="Implementation Screenshots/Admin Portal.png" alt="Admin Portal" width="24%" />
+</p>
+
+<p align="center">
   <i>Login Screen • Home Dashboard • Report Incident • Admin Portal</i>
 </p>
 

@@ -7,9 +7,8 @@ class AppConstants {
   static const String apiBaseUrl = 'https://shubham231005-nagrikalert.hf.space';
   static const String wsUrl = 'wss://shubham231005-nagrikalert.hf.space/ws/feed';
   
-  // Note: The deployed API has endpoint at /api/citizen_api.py/report
-  // Use the apiReportPath for reporting
-  static const String apiReportPath = '/api/citizen_api.py/report';
+  // Correct API endpoint
+  static const String apiReportPath = '/api/v1/report';
   
   // Incident Types
   static const List<String> incidentTypes = [

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../core/theme.dart';
 import '../../providers/incident_provider.dart';
 import '../../models/incident_model.dart';
+import '../../services/media_service.dart';
 
 class IncidentsListScreen extends StatefulWidget {
   const IncidentsListScreen({super.key});
@@ -303,16 +305,34 @@ class _IncidentDetailCard extends StatelessWidget {
     }
   }
 
-  void _showIncidentDetails(BuildContext context) {
+  void _showIncidentDetails(BuildContext context) async {
+    // Fetch media from database
+    final mediaService = MediaService();
+    final mediaList = await mediaService.getMediaForIncident(incident.id);
+    
+    final List<String> imageUrls = [];
+    final List<String> videoUrls = [];
+    
+    for (var media in mediaList) {
+      if (media['media_type'] == 'image') {
+        imageUrls.add(media['media_url'] as String);
+      } else if (media['media_type'] == 'video') {
+        videoUrls.add(media['media_url'] as String);
+      }
+    }
+
+    if (!context.mounted) return;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
+        initialChildSize: 0.7,
+        maxChildSize: 0.95,
         minChildSize: 0.4,
         expand: false,
         builder: (context, scrollController) {
@@ -385,10 +405,124 @@ class _IncidentDetailCard extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
+                // Media Section - Fetched from Database
+                if (imageUrls.isNotEmpty || videoUrls.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Icon(Icons.photo_library, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Media (${imageUrls.length + videoUrls.length})',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Images
+                  if (imageUrls.isNotEmpty) ...[
+                    SizedBox(
+                      height: 200,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: imageUrls.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () => _showFullImage(context, imageUrls[index]),
+                            child: Container(
+                              width: 200,
+                              margin: const EdgeInsets.only(right: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.grey.shade200,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  imageUrls[index],
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  // Videos indicator
+                  if (videoUrls.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.videocam, color: Colors.blue.shade700),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${videoUrls.length} video(s) attached',
+                            style: TextStyle(color: Colors.blue.shade700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showFullImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(imageUrl),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

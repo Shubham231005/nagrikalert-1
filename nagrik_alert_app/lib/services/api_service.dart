@@ -21,18 +21,30 @@ class ApiService {
     required int severity,
     required String reporterId,
     required String deviceId,
+    List<String>? mediaUrls,
+    List<String>? mediaTypes,
   }) async {
+    final body = {
+      'type': type,
+      'description': description,
+      'latitude': latitude,
+      'longitude': longitude,
+      'severity': severity,
+      'reporter_id': reporterId,
+    };
+
+    // Add media if present
+    if (mediaUrls != null && mediaUrls.isNotEmpty) {
+      body['media_urls'] = mediaUrls;
+    }
+    if (mediaTypes != null && mediaTypes.isNotEmpty) {
+      body['media_types'] = mediaTypes;
+    }
+
     final response = await http.post(
       Uri.parse('$_baseUrl${AppConstants.apiReportPath}'),
       headers: _headers(deviceId),
-      body: jsonEncode({
-        'type': type,
-        'description': description,
-        'latitude': latitude,
-        'longitude': longitude,
-        'severity': severity,
-        'reporter_id': reporterId,
-      }),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode == 200) {

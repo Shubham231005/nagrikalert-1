@@ -2,33 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Primary Color Palette - Bright & Modern
-  static const Color primaryColor = Color(0xFFE53935);      // Vibrant Red
-  static const Color secondaryColor = Color(0xFF2196F3);    // Bright Blue
-  static const Color accentColor = Color(0xFFFF9800);       // Warm Orange
-  static const Color successColor = Color(0xFF4CAF50);      // Fresh Green
-  static const Color warningColor = Color(0xFFFFC107);      // Sunny Yellow
+  // Indian Tricolor Theme - Saffron, White, Green
+  static const Color primaryColor = Color(0xFFFF9933);      // Saffron
+  static const Color secondaryColor = Color(0xFF138808);    // Green
+  static const Color accentColor = Color(0xFF000080);       // Navy Blue (Ashoka Chakra)
+  static const Color successColor = Color(0xFF138808);      // Green
+  static const Color warningColor = Color(0xFFFF9933);      // Saffron
   static const Color errorColor = Color(0xFFE53935);        // Alert Red
   
   // Light Theme Colors - Clean & Bright
   static const Color lightBackground = Color(0xFFF8FAFC);   // Very light gray
   static const Color lightSurface = Colors.white;
   static const Color lightCard = Colors.white;
-  static const Color textPrimary = Color(0xFF1A1A2E);       // Dark navy for text
+  static const Color textPrimary = Color(0xFF000080);       // Navy blue for text
   static const Color textSecondary = Color(0xFF64748B);     // Soft gray for secondary text
   static const Color dividerColor = Color(0xFFE2E8F0);      // Light divider
   
-  // Gradients - Light & Vibrant
+  // Gradients - Indian Tricolor Inspired
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFEF5350), Color(0xFFE53935)],
+    colors: [Color(0xFFFF9933), Color(0xFFFF8C00)],  // Saffron gradient
   );
   
   static const LinearGradient adminGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)],
+    colors: [Color(0xFF138808), Color(0xFF0D6B06)],  // Green gradient
+  );
+
+  static const LinearGradient tricolorGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFF9933), Color(0xFFFFFFFF), Color(0xFF138808)],  // Tricolor
   );
 
   static const LinearGradient lightGradient = LinearGradient(

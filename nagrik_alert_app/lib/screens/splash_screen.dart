@@ -91,7 +91,15 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: AppTheme.primaryGradient,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFF9933), // Saffron
+              Color(0xFFFFFFFF), // White
+              Color(0xFF138808), // Green
+            ],
+          ),
         ),
         child: Center(
           child: AnimatedBuilder(
@@ -106,8 +114,9 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       // Logo
                       Container(
-                        width: 120,
-                        height: 120,
+                        width: 150,
+                        height: 150,
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30),
@@ -119,10 +128,9 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.emergency,
-                          size: 60,
-                          color: AppTheme.primaryColor,
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -132,16 +140,17 @@ class _SplashScreenState extends State<SplashScreen>
                         style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Color(0xFF000080), // Navy blue
                           letterSpacing: 1.5,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
+                      const Text(
                         'Real-time Incident Reporting',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Color(0xFF138808), // Green
+                          fontWeight: FontWeight.w500,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -151,7 +160,7 @@ class _SplashScreenState extends State<SplashScreen>
                         width: 40,
                         height: 40,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: Color(0xFF000080), // Navy blue
                           strokeWidth: 3,
                         ),
                       ),

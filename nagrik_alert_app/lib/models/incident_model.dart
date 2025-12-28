@@ -9,6 +9,8 @@ class IncidentModel {
   final String? reporterId;
   final DateTime timestamp;
   final double? distanceMeters;
+  final List<String> mediaUrls;
+  final List<String> mediaTypes;
 
   IncidentModel({
     required this.id,
@@ -21,22 +23,42 @@ class IncidentModel {
     this.reporterId,
     required this.timestamp,
     this.distanceMeters,
+    this.mediaUrls = const [],
+    this.mediaTypes = const [],
   });
 
   factory IncidentModel.fromJson(Map<String, dynamic> json) {
+    // Handle media URLs - could be null or List
+    List<String> urls = [];
+    if (json['media_urls'] != null) {
+      if (json['media_urls'] is List) {
+        urls = List<String>.from(json['media_urls'].map((e) => e?.toString() ?? ''));
+      }
+    }
+    
+    // Handle media types - could be null or List
+    List<String> types = [];
+    if (json['media_types'] != null) {
+      if (json['media_types'] is List) {
+        types = List<String>.from(json['media_types'].map((e) => e?.toString() ?? ''));
+      }
+    }
+
     return IncidentModel(
-      id: json['id'] ?? '',
-      type: json['type'] ?? 'Other',
-      description: json['description'] ?? '',
+      id: json['id']?.toString() ?? '',
+      type: json['type']?.toString() ?? 'Other',
+      description: json['description']?.toString() ?? '',
       latitude: (json['latitude'] ?? json['lat'] ?? 0.0).toDouble(),
       longitude: (json['longitude'] ?? json['lng'] ?? 0.0).toDouble(),
       severity: json['severity'] ?? 1,
-      status: json['status'] ?? 'Unverified',
-      reporterId: json['reporter_id'],
+      status: json['status']?.toString() ?? 'Unverified',
+      reporterId: json['reporter_id']?.toString(),
       timestamp: json['timestamp'] != null 
           ? DateTime.parse(json['timestamp']) 
           : DateTime.now(),
       distanceMeters: json['distance_meters']?.toDouble(),
+      mediaUrls: urls,
+      mediaTypes: types,
     );
   }
 
@@ -48,7 +70,34 @@ class IncidentModel {
       'longitude': longitude,
       'severity': severity,
       'reporter_id': reporterId ?? 'anon',
+      'media_urls': mediaUrls,
+      'media_types': mediaTypes,
     };
+  }
+
+  // Check if has media
+  bool get hasMedia => mediaUrls.isNotEmpty;
+  
+  // Get images only
+  List<String> get images {
+    List<String> result = [];
+    for (int i = 0; i < mediaUrls.length; i++) {
+      if (i < mediaTypes.length && mediaTypes[i] == 'image') {
+        result.add(mediaUrls[i]);
+      }
+    }
+    return result;
+  }
+  
+  // Get videos only
+  List<String> get videos {
+    List<String> result = [];
+    for (int i = 0; i < mediaUrls.length; i++) {
+      if (i < mediaTypes.length && mediaTypes[i] == 'video') {
+        result.add(mediaUrls[i]);
+      }
+    }
+    return result;
   }
 
   // Helper getters

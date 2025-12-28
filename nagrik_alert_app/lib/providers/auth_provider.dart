@@ -259,6 +259,27 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Update Profile
+  Future<bool> updateProfile({String? name}) async {
+    try {
+      if (name != null && _user != null) {
+        _user = UserModel(
+          id: _user!.id,
+          email: _user!.email,
+          name: name,
+          role: _user!.role,
+          createdAt: _user!.createdAt,
+        );
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      _errorMessage = _parseError(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Parse error messages
   String _parseError(dynamic error) {
     final message = error.toString().toLowerCase();

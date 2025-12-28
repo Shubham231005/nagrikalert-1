@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/incident_provider.dart';
@@ -81,10 +82,10 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
           );
         },
         backgroundColor: AppTheme.primaryColor,
-        icon: const Icon(Icons.add_alert),
-        label: const Text('Report'),
+        icon: const Icon(Icons.add_alert, color: Colors.white),
+        label: const Text('Report', style: TextStyle(color: Colors.white)),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
@@ -99,16 +100,49 @@ class _HomeTab extends StatelessWidget {
     
     return CustomScrollView(
       slivers: [
-        // App Bar
+        // App Bar with Tricolor Theme
         SliverAppBar(
-          expandedHeight: 180,
+          expandedHeight: 200,
           floating: false,
           pinned: true,
+          backgroundColor: const Color(0xFFFF9933), // Saffron
           flexibleSpace: FlexibleSpaceBar(
-            title: const Text('NagrikAlert'),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    height: 32,
+                    width: 32,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'NagrikAlert',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
             background: Container(
               decoration: const BoxDecoration(
-                gradient: AppTheme.primaryGradient,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFFFF9933), // Saffron
+                    Color(0xFFFFFFFF), // White
+                    Color(0xFF138808), // Green
+                  ],
+                ),
               ),
               child: SafeArea(
                 child: Padding(
@@ -116,13 +150,49 @@ class _HomeTab extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 20),
-                      Text(
-                        'Hello, ${authProvider.user?.name ?? 'Citizen'}!',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
-                        ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              height: 50,
+                              width: 50,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hello, ${authProvider.user?.name ?? 'Citizen'}!',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF000080), // Navy blue
+                                ),
+                              ),
+                              const Text(
+                                'Report incidents, save lives',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF138808), // Green
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -132,7 +202,7 @@ class _HomeTab extends StatelessWidget {
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.notifications_outlined),
+              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
               onPressed: () {},
             ),
           ],
@@ -144,6 +214,10 @@ class _HomeTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // PANIC BUTTON - SOS Emergency
+                _buildPanicButton(context),
+                const SizedBox(height: 24),
+                
                 // Quick Actions
                 const Text(
                   'Quick Actions',
@@ -309,6 +383,152 @@ class _HomeTab extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPanicButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFDC2626).withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Icon(
+                  Icons.emergency,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'EMERGENCY SOS',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Tap to call emergency services',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildEmergencyButton(
+                  number: '112',
+                  label: 'Emergency',
+                  icon: Icons.warning_amber,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildEmergencyButton(
+                  number: '100',
+                  label: 'Police',
+                  icon: Icons.local_police,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildEmergencyButton(
+                  number: '101',
+                  label: 'Fire',
+                  icon: Icons.local_fire_department,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildEmergencyButton(
+                  number: '102',
+                  label: 'Ambulance',
+                  icon: Icons.local_hospital,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmergencyButton({
+    required String number,
+    required String label,
+    required IconData icon,
+  }) {
+    return InkWell(
+      onTap: () async {
+        final Uri phoneUri = Uri(scheme: 'tel', path: number);
+        if (await canLaunchUrl(phoneUri)) {
+          await launchUrl(phoneUri);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              number,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

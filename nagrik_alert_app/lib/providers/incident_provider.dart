@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/incident_model.dart';
 import '../services/api_service.dart';
 import '../services/device_service.dart';
@@ -38,6 +39,7 @@ class IncidentProvider extends ChangeNotifier {
       incidents.where((i) => i.isResolved).toList();
   List<IncidentModel> get criticalIncidents =>
       incidents.where((i) => i.severity >= 4).toList();
+  List<IncidentModel> get allIncidents => incidents;
 
   IncidentProvider() {
     _initDeviceId();
@@ -47,7 +49,7 @@ class IncidentProvider extends ChangeNotifier {
     _deviceId = await DeviceService.getDeviceId();
   }
 
-  // Load all incidents from API
+  // Load all incidents from Supabase (primary) and API (fallback)
   Future<void> loadIncidents({
     String? status,
     String? type,
@@ -57,23 +59,59 @@ class IncidentProvider extends ChangeNotifier {
       _status = IncidentStatus.loading;
       notifyListeners();
 
-      final apiIncidents = await _apiService.getIncidents(
-        status: status,
-        incidentType: type,
-        severityMin: severityMin,
-      );
+      // Fetch directly from Supabase
+      final supabase = Supabase.instance.client;
+      var query = supabase
+          .from('incidents')
+          .select()
+          .order('timestamp', ascending: false)
+          .limit(100);
+
+      final response = await query;
+      
+      List<IncidentModel> supabaseIncidents = [];
+      if (response != null) {
+        supabaseIncidents = (response as List)
+            .map((json) => IncidentModel.fromJson(json))
+            .toList();
+      }
+
+      // Apply filters locally
+      if (status != null) {
+        supabaseIncidents = supabaseIncidents.where((i) => i.status == status).toList();
+      }
+      if (type != null) {
+        supabaseIncidents = supabaseIncidents.where((i) => i.type == type).toList();
+      }
+      if (severityMin != null) {
+        supabaseIncidents = supabaseIncidents.where((i) => i.severity >= severityMin).toList();
+      }
       
       // Merge with local incidents (remove duplicates by ID)
       final localIds = _localIncidents.map((i) => i.id).toSet();
-      _incidents = apiIncidents.where((i) => !localIds.contains(i.id)).toList();
+      _incidents = supabaseIncidents.where((i) => !localIds.contains(i.id)).toList();
 
       _status = IncidentStatus.loaded;
       _errorMessage = null;
+      print('✅ Loaded ${_incidents.length} incidents from Supabase');
       notifyListeners();
     } catch (e) {
-      // Keep local incidents even if API fails
+      print('❌ Error loading incidents from Supabase: $e');
+      // Try API as fallback
+      try {
+        final apiIncidents = await _apiService.getIncidents(
+          status: status,
+          incidentType: type,
+          severityMin: severityMin,
+        );
+        final localIds = _localIncidents.map((i) => i.id).toSet();
+        _incidents = apiIncidents.where((i) => !localIds.contains(i.id)).toList();
+        print('✅ Loaded ${_incidents.length} incidents from API');
+      } catch (apiError) {
+        print('❌ API fallback also failed: $apiError');
+        _incidents = [];
+      }
       _status = IncidentStatus.loaded;
-      _incidents = [];
       _errorMessage = null;
       notifyListeners();
     }
@@ -114,6 +152,8 @@ class IncidentProvider extends ChangeNotifier {
     required double longitude,
     required int severity,
     required String reporterId,
+    List<String>? mediaUrls,
+    List<String>? mediaTypes,
   }) async {
     try {
       _status = IncidentStatus.loading;
@@ -123,15 +163,61 @@ class IncidentProvider extends ChangeNotifier {
         _deviceId = await DeviceService.getDeviceId();
       }
 
-      final incident = await _apiService.reportIncident(
+      // Generate unique ID
+      final id = DateTime.now().millisecondsSinceEpoch.toString();
+      final timestamp = DateTime.now();
+
+      // Create incident model
+      final incident = IncidentModel(
+        id: id,
         type: type,
         description: description,
         latitude: latitude,
         longitude: longitude,
         severity: severity,
+        status: 'Unverified',
         reporterId: reporterId,
-        deviceId: _deviceId!,
+        timestamp: timestamp,
+        mediaUrls: mediaUrls ?? [],
+        mediaTypes: mediaTypes ?? [],
       );
+
+      // Save to Supabase directly
+      final supabase = Supabase.instance.client;
+      await supabase.from('incidents').insert({
+        'id': id,
+        'type': type,
+        'description': description,
+        'latitude': latitude,
+        'longitude': longitude,
+        'severity': severity,
+        'status': 'Unverified',
+        'reporter_id': reporterId,
+        'device_id': _deviceId,
+        'timestamp': timestamp.toIso8601String(),
+        'media_urls': mediaUrls ?? [],
+        'media_types': mediaTypes ?? [],
+      });
+      
+      print('✅ Incident saved to Supabase: $id');
+
+      // Also try to save to API (for backup/processing)
+      try {
+        await _apiService.reportIncident(
+          type: type,
+          description: description,
+          latitude: latitude,
+          longitude: longitude,
+          severity: severity,
+          reporterId: reporterId,
+          deviceId: _deviceId!,
+          mediaUrls: mediaUrls,
+          mediaTypes: mediaTypes,
+        );
+        print('✅ Incident also saved to API');
+      } catch (apiError) {
+        print('⚠️ API save failed (Supabase already saved): $apiError');
+      }
 
       // Add to LOCAL list so it persists
       _localIncidents.insert(0, incident);
@@ -145,6 +231,7 @@ class IncidentProvider extends ChangeNotifier {
       
       return incident;
     } catch (e) {
+      print('❌ Error saving incident: $e');
       _status = IncidentStatus.error;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       notifyListeners();
@@ -159,11 +246,25 @@ class IncidentProvider extends ChangeNotifier {
     required String adminId,
   }) async {
     try {
-      await _apiService.updateIncidentStatus(
-        incidentId: incidentId,
-        newStatus: newStatus,
-        adminId: adminId,
-      );
+      // Update in Supabase directly
+      final supabase = Supabase.instance.client;
+      await supabase
+          .from('incidents')
+          .update({'status': newStatus})
+          .eq('id', incidentId);
+      
+      print('✅ Incident $incidentId status updated to $newStatus in Supabase');
+
+      // Also try API
+      try {
+        await _apiService.updateIncidentStatus(
+          incidentId: incidentId,
+          newStatus: newStatus,
+          adminId: adminId,
+        );
+      } catch (apiError) {
+        print('⚠️ API update failed (Supabase already updated): $apiError');
+      }
 
       // Update in local list
       final localIndex = _localIncidents.indexWhere((i) => i.id == incidentId);
@@ -182,15 +283,11 @@ class IncidentProvider extends ChangeNotifier {
         );
       }
 
-      _errorMessage = null;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      // Still update locally even if API fails
-      final localIndex = _localIncidents.indexWhere((i) => i.id == incidentId);
-      if (localIndex != -1) {
-        final old = _localIncidents[localIndex];
-        _localIncidents[localIndex] = IncidentModel(
+      // Also update in fetched incidents list
+      final incidentIndex = _incidents.indexWhere((i) => i.id == incidentId);
+      if (incidentIndex != -1) {
+        final old = _incidents[incidentIndex];
+        _incidents[incidentIndex] = IncidentModel(
           id: old.id,
           type: old.type,
           description: old.description,
@@ -201,9 +298,13 @@ class IncidentProvider extends ChangeNotifier {
           reporterId: old.reporterId,
           timestamp: old.timestamp,
         );
-        notifyListeners();
-        return true;
       }
+
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print('❌ Error updating incident status: $e');
       _errorMessage = e.toString();
       notifyListeners();
       return false;

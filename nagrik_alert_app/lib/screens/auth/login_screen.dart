@@ -115,42 +115,25 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildLogo() {
     return Column(
       children: [
-        // Logo Container with Gradient
+        // Logo Image
         Container(
-          width: 100,
-          height: 100,
+          width: 150,
+          height: 150,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFEF5350), Color(0xFFE53935)],
-            ),
-            borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryColor.withOpacity(0.3),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: const Icon(
-            Icons.emergency,
-            size: 50,
-            color: Colors.white,
+          child: Image.asset(
+            'assets/images/logo.png',
+            fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
-          'NagrikAlert',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1A2E),
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         Text(
           'Report incidents, save lives',
           style: TextStyle(

@@ -175,7 +175,25 @@ NagrikAlert/
 
 ---
 
-## 👥 Team
+## � Demo Credentials
+
+### 👤 Citizen Account
+| Field | Value |
+|-------|-------|
+| **Email** | `10a.vedaantambolkaryhs@gmail.com` |
+| **Password** | `123456` |
+
+### 🛡️ Admin Account
+| Field | Value |
+|-------|-------|
+| **Email** | `veduambolkar@gmail.com` |
+| **Password** | `123456` |
+
+> **Note:** These are demo accounts for testing purposes. Please use them responsibly.
+
+---
+
+## �👥 Team
 
 | Name | Role |
 |------|------|
